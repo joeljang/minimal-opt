@@ -1,2 +1,5 @@
 tokenizers==0.12.0
 tqdm
+transformers
+datasets
+jinja2
