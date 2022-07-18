@@ -1,5 +1,3 @@
-from datasets import load_dataset
-from promptsource.promptsource.templates import DatasetTemplates
 import argparse
 from argparse import ArgumentParser
 from models import load_model

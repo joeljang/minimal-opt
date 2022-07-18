@@ -2,13 +2,16 @@ import minimal_opt
 import torch
 import transformers 
 import time
+from datasets import load_dataset
+from promptsource.promptsource.templates import DatasetTemplates
+from torch.utils.data import Dataset, DataLoader
 
 class OPT:
     def __init__(self, configs):     
         start = time.time()
         model_size = configs.model_size
         if model_size == '125m':
-            self.model = minimal_opt.PPOPTModel(minimal_opt.OPT_125M_CONFIG, device = configs.CUDA_VISIBLE_DEVICES ,use_cache=True)
+            self.model = minimal_opt.OPTModel(minimal_opt.OPT_125M_CONFIG, device = f"cuda:{configs.CUDA_VISIBLE_DEVICES}" ,use_cache=True)
         elif model_size == '1.3b':
             self.model = minimal_opt.PPOPTModel(minimal_opt.OPT_1_3B_CONFIG, device = configs.CUDA_VISIBLE_DEVICES ,use_cache=True)
         elif model_size == '2.7b':
@@ -36,7 +39,7 @@ class OPT:
 
         # Takes a while? I should add a status bar. Also although it is loading shard by
         # shard (not all at once), it still takes a good amount of RAM.
-        minimal_opt.load_sharded_weights(model, shards[model_size])
+        minimal_opt.load_sharded_weights(self.model, shards[model_size])
         print(f'language model loaded! required time: {time.time()-start}')
 
     def get_dataset(self, dataset_name):
@@ -51,31 +54,32 @@ class OPT:
             else f"{dataset_name}/{dataset_config_name}"
         )
 
-        #Print samples
-        self.prompt_elem = prompt['Sentiment with choices ']
-        query = self.dataset[0]
-        prompt_temp = self.prompt_elem.my_apply(query)[1]
-        input_ = self.prompt_elem.apply(query)[0]
-        output_ = self.prompt_elem.get_answer_choices_list(query)
-        print(prompt_temp)
-        print(input_)
-        print(output_)
+        #Selecting a single prompt
+        self.prompt_elem = self.prompt['Sentiment with choices ']
     
     def inference(self):
+        total = 0
+        correct = 0
         with torch.inference_mode():
             for query in self.dataset:
+                label = query['label']
                 input_ = self.prompt_elem.apply(query)[0]
+                output_list = self.prompt_elem.get_answer_choices_list(query)
                 text = minimal_opt.greedy_generate_text(
                     self.model, self.tokenizer,
-                    input_
+                    input_,
+                    max_seq_len=128
                 )
-                print(text)
-                ids = minimal_opt.greedy_generate(
+                result = minimal_opt.greedy_generate_classify(
                     self.model, self.tokenizer,
-                    input_
-                )
-                print(ids)
-                exit()
+                    input_,
+                    max_seq_len=128,
+                    options=output_list
+                )            
+                if result==label:
+                    correct+=1
+                total+=1
+                print(f'total :{total}, correct: {correct}, accuracy: {correct/total}')
 
     def sample_inference(self):
         inference_start = time.time()

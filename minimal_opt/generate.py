@@ -61,3 +61,57 @@ def greedy_generate_text(model: nn.Module,
     input_ids = torch.LongTensor([tokenized]).to(device)
     all_token_ids = greedy_generate(model=model, input_ids=input_ids, max_seq_len=max_seq_len, verbose=verbose)
     return tokenizer.decode(all_token_ids[0])
+
+
+def greedy_generate_classify(model: nn.Module,
+                         tokenizer,
+                         initial_str: str,
+                         max_seq_len: int,
+                         options: list,
+                         device=torch.device("cuda:0"),
+                         verbose=True):
+    """Generate greedily from OPT.
+
+    :param model: OPTModel
+    :param tokenizer: OPT tokenizer (i.e. GPT-2, non-fast tokenizer)
+    :param initial_str: initial string to start generation from
+    :param max_seq_len: max sequence length to generate up to (includes input_ids)
+    :param device: device to use
+    :param verbose: whether to print progress
+
+    :return: List of token IDs
+    """
+    tokenized = tokenizer.encode(initial_str)
+    input_ids = torch.LongTensor([tokenized]).to(device)
+    options_tok = []
+    for o in options:
+        tokenized_o = tokenizer.encode(o)
+        ids = torch.LongTensor([tokenized_o]).to(device)
+        options_tok.append(ids)
+    result_index = greedy_classify(model=model, input_ids=input_ids, max_seq_len=max_seq_len, options=options_tok, verbose=verbose)
+    return result_index
+
+
+def greedy_classify(model: nn.Module, input_ids: torch.Tensor, max_seq_len: int, options: list,
+                    verbose=True):
+    """Generate greedily from OPT.
+
+    :param model: OPTModel
+    :param input_ids: token IDs [batch_size, seq_len]
+    :param max_seq_len: max sequence length to generate up to (includes input_ids)
+    :param verbose: whether to print progress
+
+    :return: List of token IDs
+    """
+    initial_input_length = input_ids.shape[1]
+    probs = []
+    for o in options:
+        concat = torch.cat([input_ids,o], axis=1)
+        total_length = concat.shape[1]
+        outputs, _ = model(concat)
+        prob = 1
+        start = initial_input_length
+        for i in range(total_length-initial_input_length):
+            prob = prob * outputs[0][start][o[0][i]]
+        probs.append(prob.item())
+    return probs.index(min(probs))

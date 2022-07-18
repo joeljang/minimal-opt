@@ -2,7 +2,7 @@
     "dataset" : "imdb",
     "model" : "opt",
     "model_size" : "125m",
-    "CUDA_VISIBLE_DEVICES" : "2",
+    "CUDA_VISIBLE_DEVICES" : "0",
     "wandb_log": true,
     "wandb_project": "opt",
     "wandb_run_name" : "opt_2.7b"

@@ -2,8 +2,6 @@ import minimal_opt
 import torch
 import transformers
 
-class OPT()
-
 model = minimal_opt.OPTModel(minimal_opt.OPT_2_7B_CONFIG, device="cuda:0", use_cache=True)
 tokenizer = transformers.GPT2Tokenizer.from_pretrained(
     "facebook/opt-125m"
