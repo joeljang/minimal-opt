@@ -1,0 +1,9 @@
+{
+    "dataset" : "imdb",
+    "model" : "opt",
+    "model_size" : "2.7b",
+    "CUDA_VISIBLE_DEVICES" : "2",
+    "wandb_log": true,
+    "wandb_project": "opt",
+    "wandb_run_name" : "opt_2.7b"
+}

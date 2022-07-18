@@ -7,30 +7,7 @@ start = time.time()
 tokenizer = transformers.GPT2Tokenizer.from_pretrained(
     "facebook/opt-125m"
 )
-from datasets import load_dataset
-from promptsource.promptsource.templates import DatasetTemplates
 
-#Loading IMDB dataset
-type_path = 'test'
-dataset_name = 'imdb'
-dataset_config_name = dataset_name.split('/')[1] if len(dataset_name.split('/'))!=1 else None
-imdb_dataset = load_dataset(dataset_name, dataset_config_name,ignore_verifications=True)[type_path]
-
-prompt = DatasetTemplates(
-            f"{dataset_name}"
-            if dataset_config_name is None
-            else f"{dataset_name}/{dataset_config_name}"
-        )
-prompt_elem = prompt['Sentiment with choices ']
-query = imdb_dataset[0]
-print(query)
-prompt_temp = prompt_elem.my_apply(query)[1]
-input_ = prompt_elem.apply(query)[0]
-output_ = prompt_elem.get_answer_choices_list(query)
-print(prompt_temp)
-print(input_)
-print(output_)
-exit()
 # Takes a while? I should add a status bar. Also although it is loading shard by
 # shard (not all at once), it still takes a good amount of RAM.
 minimal_opt.load_sharded_weights(model, [
