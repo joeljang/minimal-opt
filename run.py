@@ -22,5 +22,5 @@ if __name__ == '__main__':
     #Load and use model for inference
     model = load_model(args.model)
     model = model(args)
-    model.get_dataset(args.dataset)
-    model.inference()
+    model.get_dataset()
+    model.evaluate()

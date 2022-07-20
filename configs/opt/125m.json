@@ -1,9 +1,10 @@
 {
-    "dataset" : "imdb",
+    "dataset" : "hellaswag",
+    "input_length" : 512,
+    "output_length" : 64,
     "model" : "opt",
     "model_size" : "125m",
     "CUDA_VISIBLE_DEVICES" : "0",
-    "wandb_log": true,
-    "wandb_project": "opt",
-    "wandb_run_name" : "opt_2.7b"
+    "batch_size": 128,
+    "num_workers": 40
 }
