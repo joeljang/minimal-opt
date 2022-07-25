@@ -5,6 +5,6 @@
     "model" : "opt",
     "model_size" : "125m",
     "CUDA_VISIBLE_DEVICES" : "0",
-    "batch_size": 128,
+    "batch_size": 16,
     "num_workers": 40
 }

@@ -108,18 +108,9 @@ class OPT:
                     option = batch["option_list"]
                     option_ = self.tokenizer.batch_encode_plus(option[index], max_length=self.configs.output_length,
                                                     padding=True, truncation=True, return_tensors="pt")
-                    print(option_)
-                    print(option_['input_ids'].shape)
-                    print(batch["source_ids"].shape)
                     input_ = torch.concat([batch["source_ids"], option_['input_ids']], dim=1)
-                    print(input_.shape)
-                    print(input_[0])
-                    #input_[input_[:, :] == self.tokenizer.pad_token_id] = -100
-                    print(input_[0])
                     attention_masks = torch.concat([batch["source_mask"], option_['attention_mask']], dim=1)
                     attention_masks = attention_masks.bool()
-                    print(attention_masks.shape)
-                    print(attention_masks[0])
                     lm_labels = option_["input_ids"].expand(len(batch['source_ids']), -1)
                     lm_labels[lm_labels[:, :] == self.tokenizer.pad_token_id] = -100
                     #outputs, _ = minimal_opt.greedy_classify(
@@ -139,8 +130,9 @@ class OPT:
                     options_ = torch.tensor(options_)
                     print(outputs_.shape)
                     print(options_.shape)
-                    #logits = option_ * outputs_
-                    logits = torch.matmul(option_, outputs_)
+                    logits = outputs_ * options_
+                    #print(options_)
+                    #logits = torch.matmul(outputs_, options_)
                     #logits = outputs_
                     lm_labels=lm_labels.cuda().unsqueeze(-1)
                     seq_token_log_prob=torch.zeros(lm_labels.shape)
