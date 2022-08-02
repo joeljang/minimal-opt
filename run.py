@@ -22,5 +22,8 @@ if __name__ == '__main__':
     #Load and use model for inference
     model = load_model(args.model)
     model = model(args)
-    model.get_dataset()
-    model.evaluate()
+    #model.get_dataset()
+    model.evaluate_single_batch("review generation")
+    model.evaluate_single_batch("review generation negation")
+    model.evaluate_single_batch("review generation negation2")
+    #model.evaluate()

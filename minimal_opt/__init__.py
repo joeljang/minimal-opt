@@ -11,4 +11,4 @@ from .model import (
     OPT_175B_CONFIG,
 )
 from .loading import load_sharded_weights
-from .generate import greedy_generate, greedy_generate_text, greedy_classify
+from .generate import greedy_generate, greedy_generate_text, greedy_classify, inference

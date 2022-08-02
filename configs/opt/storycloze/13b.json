@@ -1,11 +1,11 @@
 {
-    "dataset" : "lambada",
-    "prompt_name" : "please next word",
-    "input_length" : 256,
+    "dataset" : "story_cloze/2016",
+    "prompt_name" : "Generate Ending Negation",
+    "input_length" : 512,
     "output_length" : 64,
     "model" : "opt",
     "model_size" : "13b",
     "CUDA_VISIBLE_DEVICES" : "0",
-    "batch_size": 8,
+    "batch_size": 24,
     "num_workers": 40
 }

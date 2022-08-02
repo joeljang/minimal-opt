@@ -1,6 +1,6 @@
 {
-    "dataset" : "imdb",
-    "prompt_name" : "Reviewer Expressed Sentiment",
+    "dataset" : "story_cloze/2016",
+    "prompt_name" : "Generate Ending Negation",
     "input_length" : 512,
     "output_length" : 64,
     "model" : "opt",

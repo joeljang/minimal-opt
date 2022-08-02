@@ -1,6 +1,6 @@
 {
-    "dataset" : "imdb",
-    "prompt_name" : "Reviewer Expressed Sentiment",
+    "dataset" : "winogrande/winogrande_s",
+    "prompt_name" : "does underscore refer to",
     "input_length" : 512,
     "output_length" : 64,
     "model" : "opt",

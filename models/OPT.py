@@ -3,11 +3,16 @@ import torch
 import transformers 
 import time
 from torch.utils.data import Dataset, DataLoader
+from torch.nn import CrossEntropyLoss
 
+from datasets import load_dataset
+from promptsource.promptsource.templates import DatasetTemplates
 from Datasets import Custom_Dataset
 from torch.utils.data import DataLoader
 import string
 import re
+import numpy as np
+import random
 
 class OPT:
     def __init__(self, configs):     
@@ -52,6 +57,7 @@ class OPT:
         # shard (not all at once), it still takes a good amount of RAM.
         minimal_opt.load_sharded_weights(self.model, shards[model_size])
         print(f'language model loaded! required time: {time.time()-start}')
+
     def ids_to_clean_text(self, tokenizer, generated_ids):
         gen_text = tokenizer.batch_decode(
             generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
@@ -94,6 +100,84 @@ class OPT:
         #Loading IMDB dataset
         self.dataset = Custom_Dataset(self.configs)
     
+    def evaluate_single_batch(self, prompt_name=None):
+        if '/' in self.configs.dataset:
+            dataset_name = self.configs.dataset.split('/')[0]
+            dataset_config_name = self.configs.dataset.split('/')[1]
+        else:
+            dataset_name = self.configs.dataset
+            dataset_config_name = dataset_name.split('/')[1] if len(dataset_name.split('/'))!=1 else None
+        type_path = 'test'
+        #type_path = 'validation'   
+        #dataset_config_name = 'qqp'
+        if 'story_cloze' in dataset_name:
+            eval_dataset = load_dataset('story_cloze','2016', data_dir='data/story_cloze')[type_path]
+        else:
+            eval_dataset = load_dataset(dataset_name, dataset_config_name, ignore_verifications=True)[type_path]
+        if self.configs.dataset != 'lambada':
+            eval_dataset = eval_dataset.shuffle(seed=42)
+
+        self.prompt = DatasetTemplates(
+            f"{dataset_name}"
+            if dataset_config_name is None
+            else f"{dataset_name}/{dataset_config_name}"
+        )
+        #Selecting a single prompt
+        if prompt_name!=None:
+            self.prompt_elem = self.prompt[prompt_name]
+        else:
+            self.prompt_elem = self.prompt[self.configs.prompt_name]
+
+        limit=100
+        total_cnt=0
+        correct_cnt=0
+        wront_cnt=0
+        total_length = len(eval_dataset)
+        gap = total_length // limit
+    
+        for query in eval_dataset:
+            result = self.prompt_elem.apply(query)
+            input_ = self.tokenizer.encode(result[0], return_tensors='pt', add_special_tokens = False)
+            target_ = self.tokenizer.encode(result[1], return_tensors='pt', add_special_tokens = False)
+            option_lst = self.prompt_elem.get_answer_choices_list(query)
+            input_length = len(input_[0])
+            #print(f'input : {result[0]}')
+            #print(f'ground truth: {result[1]}')
+            loss_lst = []
+            #print(option_lst)
+            for option in option_lst:
+                options_ = self.tokenizer.encode(" " + option, return_tensors='pt', add_special_tokens = False)
+                #options_ = self.tokenizer.encode(option, return_tensors='pt')
+                
+                lm_logits, _ = minimal_opt.inference(
+                        self.model,
+                        input_ids=(torch.concat([input_,options_], dim=1)).cuda()
+                    )  
+                labels = torch.concat([input_,options_], dim=1)
+                # Shift so that tokens < n predict n
+                shift_logits = lm_logits[..., :-1, :].contiguous()
+                shift_labels = labels[..., 1:].contiguous().cuda()
+                # Flatten the tokens
+                loss_fct = CrossEntropyLoss()
+                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+                loss = torch.exp(loss)
+                loss_lst.append(loss.detach().cpu())
+            min_index = np.argmin(loss_lst)
+            #print(f'prediction {min_index}: {option_lst[min_index]}')
+            #if min_index==0:
+            if str(option_lst[min_index]) == str(result[1]):
+                #print(f'correct!')
+                correct_cnt+=1
+            else:
+                #print('wrong!')
+                wront_cnt+=1
+            total_cnt+=1
+            if total_cnt==limit:
+                print(f'total: {total_cnt}, correct: {correct_cnt}, wrong: {wront_cnt}')
+                print(f'Percentage correct: {correct_cnt / total_cnt}')
+                break
+     
+
     def evaluate(self):
         validation_dataloader = DataLoader(self.dataset, batch_size=self.configs.batch_size, shuffle=True, num_workers=self.configs.num_workers)
         prediction_dict = {}
@@ -128,8 +212,8 @@ class OPT:
                     outputs_ = torch.log_softmax(outputs[:,self.configs.input_length:], dim=-1)
                     options_ = option_["attention_mask"].cuda().unsqueeze(-1)
                     options_ = torch.tensor(options_)
-                    print(outputs_.shape)
-                    print(options_.shape)
+                    #print(outputs_.shape)
+                    #print(options_.shape)
                     logits = outputs_ * options_
                     #print(options_)
                     #logits = torch.matmul(outputs_, options_)

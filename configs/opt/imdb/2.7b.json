@@ -1,6 +1,6 @@
 {
     "dataset" : "imdb",
-    "prompt_name" : "Reviewer Expressed Sentiment",
+    "prompt_name" : "review generation negation2",
     "input_length" : 512,
     "output_length" : 64,
     "model" : "opt",

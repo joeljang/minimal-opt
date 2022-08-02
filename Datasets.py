@@ -18,7 +18,7 @@ class Custom_Dataset(Dataset):
             else f"{dataset_name}/{dataset_config_name}"
         )
         #Selecting a single prompt
-        self.prompt_elem = self.prompt['complete_first_then']
+        #self.prompt_elem = self.prompt['complete_first_then']
 
     def __len__(self):
         return len(self.dataset)
@@ -29,6 +29,8 @@ class Custom_Dataset(Dataset):
         input_ = result[0]
         target_ = result[1]
         option_list = self.prompt_elem.get_answer_choices_list(query)
+        for i in range(len(option_list)):
+            option_list[i] = " " + option_list[i]
         
         source = self.tokenizer.batch_encode_plus([str(input_)], max_length=self.configs.input_length,
                                                             padding='max_length', truncation=True, return_tensors="pt", add_special_tokens=True)

@@ -62,6 +62,12 @@ def greedy_generate_text(model: nn.Module,
     all_token_ids = greedy_generate(model=model, input_ids=input_ids, max_seq_len=max_seq_len, verbose=verbose)
     return tokenizer.decode(all_token_ids[0])
 
+def inference(model: nn.Module, input_ids: torch.Tensor):
+    outputs = model(
+        input_ids = input_ids
+    )
+    return outputs
+
 def greedy_classify(model: nn.Module, input_ids: torch.Tensor, attention_mask: torch.Tensor):
     outputs = model(
         input_ids = input_ids
